@@ -7,6 +7,38 @@
         [v-cloak] {
             display: none;
         }
+        .highlight {
+            border: solid 3px red;
+            color: red;
+        }
+        .shooting-star-leave-to, .shooting-star-enter{
+            transform: translateX(-300px);
+            opacity: 0;
+        }
+        .shooting-star-enter-active, .shooting-star-leave-active {
+            transition: all .5s ease;
+        }
+        .neo-list-leave-to, .neo-list-enter{
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+        .neo-list-enter-active, .neo-list-leave-active{
+            transition: all .5s linear;
+        }
+        .spin-enter-active {
+            animation: spin-steps 10s;
+        }
+        @keyframes spin-steps {
+            0% {
+                transform: scale(1) rotate(0);
+            }
+            50% {
+                transform: scale(10) rotate(360deg);
+            }
+            100% {
+                transform: scale(1) rotate(108000deg);
+            }
+        }
     </style>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
 </head>
@@ -15,12 +47,22 @@
 <div id="app">
     <div class="container">
         <div class="card mt-5">
-            <h2 class="card-header">Near-Earth Objects</h2>
-            <div class="m-3" v-cloak v-if="numAsteroids > 0">
+            <h2 class="card-header">
+                Near-Earth
+                <transition name="spin" appear>
+                    <span style="display: inline-block">Objects</span>
+                </transition>
+            </h2>
+            <transition name="shooting-star">
+            <div class="m-3" v-cloak v-if="numAsteroids > 0 && showSummary">
                 <p>showing {{numAsteroids}} items</p>
                 <p>{{closestObject}} has the shortest miss distance</p>
             </div>
-            <table class="table">
+            </transition>
+            <div class="m-3">
+                <a href="#" @click="showSummary = !showSummary">Show/hide summary</a>
+            </div>
+            <table class="table table-striped" >
                 <thead class="thead-light">
                     <th>#</th>
                     <th>Name</th>
@@ -28,8 +70,10 @@
                     <th>Miss distance</th>
                     <th>Remove</th>
                 </thead>
-                <tbody v-cloak>
-                    <tr v-for="(a, index) in asteroids" :key="a.neo_reference_id">
+                <tbody is="transition-group" name="neo-list" v-cloak>
+                <!--:style="getRowStyle(a)" style="color: green" dynamic style attribute-->
+                    <tr v-for="(a, index) in asteroids" :key="a.neo_reference_id"
+                    :class="{highlight: isMissingData(a)}">
                         <td>{{index + 1}}</td>
                         <td>{{a.name}}</td>
                         <td>{{getCloseApproachDate(a)}}</td>
@@ -56,7 +100,8 @@
     var vm = new Vue({
         el: '#app',
         data: {
-            asteroids: []
+            asteroids: [],
+            showSummary: true
         },
         computed: {
             numAsteroids: function () {
@@ -96,6 +141,17 @@
             },
             remove: function (index) {
                 this.asteroids.splice(index, 1);
+            },
+            getRowStyle: function (a) {
+                if(a.close_approach_data.length == 0){
+                    return {
+                        border: 'solid 3px red',
+                        color: 'red'
+                    }
+                }
+            },
+            isMissingData: function (a) {
+                return a.close_approach_data.length == 0;
             }
         }
     });
